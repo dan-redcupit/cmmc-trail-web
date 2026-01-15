@@ -20,6 +20,8 @@ import LeaderboardScreen from '@/components/LeaderboardScreen';
 import NameEntryModal from '@/components/NameEntryModal';
 import RiverCrossingScreen from '@/components/RiverCrossingScreen';
 import ValleyOfDespairScreen from '@/components/ValleyOfDespairScreen';
+import SupplyStoreScreen from '@/components/SupplyStoreScreen';
+import { StoreItem } from '@/lib/gameState';
 
 export default function Home() {
   const [state, dispatch] = useReducer(gameReducer, getInitialState());
@@ -177,6 +179,16 @@ export default function Home() {
     dispatch({ type: 'CONVINCE_LEADERSHIP', success });
   }, []);
 
+  // Supply Store handlers
+  const handleBuyItem = useCallback((item: StoreItem) => {
+    dispatch({ type: 'BUY_ITEM', item });
+  }, []);
+
+  const handleLeaveStore = useCallback(() => {
+    sounds.playWagonMove();
+    dispatch({ type: 'LEAVE_STORE' });
+  }, []);
+
   // Calculate accuracy for leaderboard
   const accuracy = state.questionsAnswered > 0
     ? Math.round((state.correctAnswers / state.questionsAnswered) * 100)
@@ -315,6 +327,17 @@ export default function Home() {
     case 'valley_of_despair':
       return (
         <ValleyOfDespairScreen onConvince={handleConvinceLeadership} />
+      );
+
+    case 'store':
+      return (
+        <SupplyStoreScreen
+          sprsScore={state.sprsScore}
+          morale={state.morale}
+          deathShield={state.deathShield}
+          onBuyItem={handleBuyItem}
+          onLeave={handleLeaveStore}
+        />
       );
 
     case 'gameover':

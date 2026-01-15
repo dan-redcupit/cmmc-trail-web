@@ -14,6 +14,7 @@ export type Screen =
   | 'resting'
   | 'river'
   | 'valley_of_despair'
+  | 'store'
   | 'gameover'
   | 'victory'
   | 'leaderboard';
@@ -53,7 +54,31 @@ export interface GameState {
   deathShield: boolean;  // Prevents next random death (from Supply Store)
   totalDeaths: number;   // Track for achievements
   consecutiveCorrect: number;  // Track for perfect audit achievement
+  visitedStores: number[];  // Track which milestone stores have been visited
+  visitedRivers: number[];  // Track which river crossings have been visited
+  visitedValley: boolean;   // Track if Valley of Despair has been visited
 }
+
+// Store items available for purchase
+export interface StoreItem {
+  id: string;
+  name: string;
+  description: string;
+  cost: number;  // SPRS cost
+  effect: 'morale' | 'sprs' | 'shield' | 'both';
+  moraleBonus?: number;
+  sprsBonus?: number;
+}
+
+export const STORE_ITEMS: StoreItem[] = [
+  { id: 'training', name: 'Security Awareness Training', description: 'Mandatory fun for the whole team', cost: 5, effect: 'morale', moraleBonus: 15 },
+  { id: 'consultant', name: 'Expensive Consultant', description: 'They have a nice suit and a PowerPoint', cost: 10, effect: 'both', sprsBonus: 8, moraleBonus: -5 },
+  { id: 'pizza', name: 'Pizza for the Team', description: 'The universal motivator', cost: 3, effect: 'morale', moraleBonus: 25 },
+  { id: 'edr', name: 'EDR License Renewal', description: 'Protection against the next incident', cost: 8, effect: 'shield' },
+  { id: 'coffee', name: 'Premium Coffee Supply', description: 'Fuel for late-night compliance work', cost: 2, effect: 'morale', moraleBonus: 10 },
+  { id: 'templates', name: 'Compliance Templates Pack', description: 'Pre-written policies (just add logo!)', cost: 6, effect: 'sprs', sprsBonus: 5 },
+  { id: 'audit_prep', name: 'Audit Prep Workshop', description: 'Practice your poker face', cost: 7, effect: 'both', sprsBonus: 3, moraleBonus: 10 },
+];
 
 export type GameAction =
   | { type: 'START_GAME' }
@@ -90,7 +115,10 @@ export type GameAction =
   | { type: 'CONVINCE_LEADERSHIP'; success: boolean }
   | { type: 'TOGGLE_GOD_MODE' }
   | { type: 'SET_DIFFICULTY'; difficulty: Difficulty }
-  | { type: 'SET_PARTY_WITH_BONUS'; party: string[]; sprsBonus: number };
+  | { type: 'SET_PARTY_WITH_BONUS'; party: string[]; sprsBonus: number }
+  | { type: 'SHOW_STORE'; milestone: number }
+  | { type: 'BUY_ITEM'; item: StoreItem }
+  | { type: 'LEAVE_STORE' };
 
 export function getInitialState(): GameState {
   return {
@@ -116,6 +144,9 @@ export function getInitialState(): GameState {
     deathShield: false,
     totalDeaths: 0,
     consecutiveCorrect: 0,
+    visitedStores: [],
+    visitedRivers: [],
+    visitedValley: false,
   };
 }
 
@@ -189,17 +220,39 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return { ...state, screen: 'trail', animationFrame: state.animationFrame + 1 };
 
     case 'CONTINUE_TRAIL': {
+      // Supply Store at milestones (250, 750, 1250, 1750 miles)
+      const storeMilestones = [250, 750, 1250, 1750];
+      for (const milestone of storeMilestones) {
+        if (!state.visitedStores.includes(milestone) &&
+            state.milesTraveled < milestone &&
+            state.milesTraveled + 100 >= milestone) {
+          return {
+            ...state,
+            visitedStores: [...state.visitedStores, milestone],
+            screen: 'store'
+          };
+        }
+      }
+
       // River crossing at ~500 miles and ~1500 miles (2 total)
       const riverMilestones = [500, 1500];
       for (const milestone of riverMilestones) {
-        if (state.milesTraveled < milestone && state.milesTraveled + 200 >= milestone) {
-          return { ...state, screen: 'river' };
+        if (!state.visitedRivers.includes(milestone) &&
+            state.milesTraveled < milestone &&
+            state.milesTraveled + 150 >= milestone) {
+          return {
+            ...state,
+            visitedRivers: [...state.visitedRivers, milestone],
+            screen: 'river'
+          };
         }
       }
 
       // Valley of Despair at ~1000 miles (midpoint - 1 total)
-      if (state.milesTraveled < 1000 && state.milesTraveled + 200 >= 1000) {
-        return { ...state, screen: 'valley_of_despair' };
+      if (!state.visitedValley &&
+          state.milesTraveled < 1000 &&
+          state.milesTraveled + 150 >= 1000) {
+        return { ...state, visitedValley: true, screen: 'valley_of_despair' };
       }
 
       // Check for random event (35% chance)
@@ -592,6 +645,52 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         party,
         sprsScore: Math.min(110, Math.max(-203, state.sprsScore + action.sprsBonus)),
         screen: 'trail'
+      };
+    }
+
+    // === SUPPLY STORE ===
+    case 'SHOW_STORE':
+      return { ...state, screen: 'store' };
+
+    case 'BUY_ITEM': {
+      const item = action.item;
+      // Check if player can afford it
+      if (state.sprsScore < item.cost) {
+        return state; // Can't afford
+      }
+
+      let newState = {
+        ...state,
+        sprsScore: state.sprsScore - item.cost,
+      };
+
+      // Apply item effects
+      if (item.effect === 'morale' && item.moraleBonus) {
+        newState.morale = Math.min(100, Math.max(0, newState.morale + item.moraleBonus));
+      } else if (item.effect === 'sprs' && item.sprsBonus) {
+        newState.sprsScore = Math.min(110, newState.sprsScore + item.sprsBonus);
+      } else if (item.effect === 'shield') {
+        newState.deathShield = true;
+      } else if (item.effect === 'both') {
+        if (item.moraleBonus) {
+          newState.morale = Math.min(100, Math.max(0, newState.morale + item.moraleBonus));
+        }
+        if (item.sprsBonus) {
+          newState.sprsScore = Math.min(110, newState.sprsScore + item.sprsBonus);
+        }
+      }
+
+      return newState;
+    }
+
+    case 'LEAVE_STORE': {
+      // After leaving store, continue to a question
+      const question = getRandomQuestion(state);
+      return {
+        ...state,
+        currentQuestion: question,
+        usedQuestions: [...state.usedQuestions, question.id],
+        screen: 'question'
       };
     }
 
