@@ -301,11 +301,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       };
 
       if (isBest) {
-        // BEST answer: Full rewards (100 miles = minimum 20 questions to complete)
+        // BEST answer: Full rewards (50 miles = minimum 40 questions to complete)
         newState = {
           ...newState,
           correctAnswers: state.correctAnswers + 1,
-          milesTraveled: Math.min(state.totalMiles, state.milesTraveled + 100),
+          milesTraveled: Math.min(state.totalMiles, state.milesTraveled + 50),
           morale: Math.min(100, state.morale + 10),
           sprsScore: Math.min(110, state.sprsScore + 5),
         };
@@ -314,7 +314,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         newState = {
           ...newState,
           correctAnswers: state.correctAnswers + 1,
-          milesTraveled: Math.min(state.totalMiles, state.milesTraveled + 75),
+          milesTraveled: Math.min(state.totalMiles, state.milesTraveled + 35),
           morale: Math.min(100, state.morale + 5),
           sprsScore: Math.min(110, state.sprsScore + 2),
         };
@@ -322,7 +322,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         // WRONG answer: Penalties
         newState = {
           ...newState,
-          milesTraveled: state.milesTraveled + 25,
+          milesTraveled: state.milesTraveled + 15,
           morale: Math.max(0, state.morale - 15),
           sprsScore: Math.max(-203, state.sprsScore - 8),
         };
@@ -437,7 +437,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const newState = {
         ...state,
         morale: Math.min(100, state.morale + 15),
-        milesTraveled: state.milesTraveled + 25,
+        milesTraveled: state.milesTraveled + 15,
       };
 
       // 20% chance of event while resting
@@ -455,7 +455,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'FINISH_HUNTING': {
       const findings = Math.floor(Math.random() * 51);
       let severity: 'critical' | 'moderate' | 'low';
-      let newState = { ...state, milesTraveled: state.milesTraveled + 50 };
+      let newState = { ...state, milesTraveled: state.milesTraveled + 25 };
 
       if (findings > 30) {
         severity = 'critical';
@@ -525,7 +525,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             ...state,
             party,
             lastDeath: { name: victim.name, message: "was swept away while fording the Legacy Systems River" },
-            milesTraveled: state.milesTraveled + 50,
+            milesTraveled: state.milesTraveled + 25,
             screen: 'death'
           };
         }
@@ -534,14 +534,14 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           ...state,
           morale: Math.max(0, state.morale - 25),
           sprsScore: Math.max(-203, state.sprsScore - 10),
-          milesTraveled: state.milesTraveled + 50,
+          milesTraveled: state.milesTraveled + 25,
           screen: 'trail',
           animationFrame: state.animationFrame + 1
         };
       }
       return {
         ...state,
-        milesTraveled: state.milesTraveled + 75,
+        milesTraveled: state.milesTraveled + 40,
         screen: 'trail',
         animationFrame: state.animationFrame + 1
       };
@@ -551,7 +551,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       // Safe but slow - lose time, small morale hit
       return {
         ...state,
-        milesTraveled: state.milesTraveled + 25,
+        milesTraveled: state.milesTraveled + 15,
         morale: Math.max(0, state.morale - 10),
         screen: 'trail',
         animationFrame: state.animationFrame + 1
@@ -568,7 +568,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             ...state,
             party,
             lastDeath: { name: victim.name, message: "drowned when the caulked server rack sank in the Legacy River" },
-            milesTraveled: state.milesTraveled + 50,
+            milesTraveled: state.milesTraveled + 25,
             screen: 'death'
           };
         }
@@ -577,14 +577,14 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           ...state,
           morale: Math.max(0, state.morale - 30),
           sprsScore: Math.max(-203, state.sprsScore - 15),
-          milesTraveled: state.milesTraveled + 50,
+          milesTraveled: state.milesTraveled + 25,
           screen: 'trail',
           animationFrame: state.animationFrame + 1
         };
       }
       return {
         ...state,
-        milesTraveled: state.milesTraveled + 100,
+        milesTraveled: state.milesTraveled + 50,
         morale: Math.min(100, state.morale + 10),
         screen: 'trail',
         animationFrame: state.animationFrame + 1
@@ -601,7 +601,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           ...state,
           morale: Math.min(100, state.morale + 30),
           sprsScore: Math.min(110, state.sprsScore + 10),
-          milesTraveled: state.milesTraveled + 150,
+          milesTraveled: state.milesTraveled + 75,
           screen: 'trail',
           animationFrame: state.animationFrame + 1
         };
@@ -624,7 +624,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           ...state,
           morale: Math.max(0, state.morale - 30),
           sprsScore: Math.max(-203, state.sprsScore - 5),
-          milesTraveled: state.milesTraveled + 50,
+          milesTraveled: state.milesTraveled + 25,
           screen: 'trail',
           animationFrame: state.animationFrame + 1
         };
