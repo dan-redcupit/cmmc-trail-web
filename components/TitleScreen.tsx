@@ -7,6 +7,7 @@ import * as sounds from '@/lib/sounds';
 interface TitleScreenProps {
   onContinue: () => void;
   onLeaderboard: () => void;
+  onAchievements: () => void;
   onGodMode: () => void;
   onSetDifficulty: (difficulty: Difficulty) => void;
   godMode: boolean;
@@ -25,6 +26,7 @@ const DIFFICULTY_LABELS: Record<Difficulty, { name: string; color: string; descr
 export default function TitleScreen({
   onContinue,
   onLeaderboard,
+  onAchievements,
   onGodMode,
   onSetDifficulty,
   godMode,
@@ -245,6 +247,12 @@ export default function TitleScreen({
           Leaderboard
         </button>
         <button
+          className="terminal-btn text-lg px-6 py-3 text-terminal-cyan border-terminal-cyan hover:bg-terminal-cyan"
+          onClick={(e) => { e.stopPropagation(); onAchievements(); }}
+        >
+          Achievements
+        </button>
+        <button
           className={`terminal-btn text-lg px-6 py-3 ${difficultyInfo.color} border-current hover:bg-current`}
           onClick={(e) => { e.stopPropagation(); sounds.playClick(); setShowDifficulty(!showDifficulty); }}
         >
@@ -275,7 +283,7 @@ export default function TitleScreen({
 
       {/* Version */}
       <div className="mt-8 text-terminal-green/50 text-xs">
-        v1.0.1 {godMode && '(cheater)'}
+        v1.0.2 {godMode && '(cheater)'}
       </div>
 
       {/* Retro mode footer */}

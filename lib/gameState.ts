@@ -17,7 +17,8 @@ export type Screen =
   | 'store'
   | 'gameover'
   | 'victory'
-  | 'leaderboard';
+  | 'leaderboard'
+  | 'achievements';
 
 export interface PartyMember {
   name: string;
@@ -57,6 +58,10 @@ export interface GameState {
   visitedStores: number[];  // Track which milestone stores have been visited
   visitedRivers: number[];  // Track which river crossings have been visited
   visitedValley: boolean;   // Track if Valley of Despair has been visited
+  // Achievement tracking
+  tankFireCount: number;    // Track tank shots for achievement
+  itemsBought: number;      // Track store purchases
+  secretNameUsed: boolean;  // Track if secret name was used
 }
 
 // Store items available for purchase
@@ -118,7 +123,11 @@ export type GameAction =
   | { type: 'SET_PARTY_WITH_BONUS'; party: string[]; sprsBonus: number }
   | { type: 'SHOW_STORE'; milestone: number }
   | { type: 'BUY_ITEM'; item: StoreItem }
-  | { type: 'LEAVE_STORE' };
+  | { type: 'LEAVE_STORE' }
+  | { type: 'SHOW_ACHIEVEMENTS' }
+  | { type: 'CLOSE_ACHIEVEMENTS' }
+  | { type: 'FIRE_TANK' }
+  | { type: 'MARK_SECRET_NAME_USED' };
 
 export function getInitialState(): GameState {
   return {
@@ -147,6 +156,10 @@ export function getInitialState(): GameState {
     visitedStores: [],
     visitedRivers: [],
     visitedValley: false,
+    // Achievement tracking
+    tankFireCount: 0,
+    itemsBought: 0,
+    secretNameUsed: false,
   };
 }
 
@@ -305,6 +318,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         newState = {
           ...newState,
           correctAnswers: state.correctAnswers + 1,
+          consecutiveCorrect: state.consecutiveCorrect + 1,
           milesTraveled: Math.min(state.totalMiles, state.milesTraveled + 50),
           morale: Math.min(100, state.morale + 10),
           sprsScore: Math.min(110, state.sprsScore + 5),
@@ -314,14 +328,16 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         newState = {
           ...newState,
           correctAnswers: state.correctAnswers + 1,
+          consecutiveCorrect: state.consecutiveCorrect + 1,
           milesTraveled: Math.min(state.totalMiles, state.milesTraveled + 35),
           morale: Math.min(100, state.morale + 5),
           sprsScore: Math.min(110, state.sprsScore + 2),
         };
       } else {
-        // WRONG answer: Penalties
+        // WRONG answer: Penalties, reset consecutive streak
         newState = {
           ...newState,
+          consecutiveCorrect: 0,
           milesTraveled: state.milesTraveled + 15,
           morale: Math.max(0, state.morale - 15),
           sprsScore: Math.max(-203, state.sprsScore - 8),
@@ -334,6 +350,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             newState = {
               ...newState,
               party,
+              totalDeaths: state.totalDeaths + 1,
               lastDeath: { name: victim.name, message: getRandomDeathMessage() }
             };
           }
@@ -381,6 +398,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             newState = {
               ...newState,
               party,
+              totalDeaths: state.totalDeaths + 1,
               lastDeath: { name: victim.name, message: getRandomDeathMessage() },
               screen: 'death' as Screen
             };
@@ -524,6 +542,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           return {
             ...state,
             party,
+            totalDeaths: state.totalDeaths + 1,
             lastDeath: { name: victim.name, message: "was swept away while fording the Legacy Systems River" },
             milesTraveled: state.milesTraveled + 25,
             screen: 'death'
@@ -567,6 +586,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           return {
             ...state,
             party,
+            totalDeaths: state.totalDeaths + 1,
             lastDeath: { name: victim.name, message: "drowned when the caulked server rack sank in the Legacy River" },
             milesTraveled: state.milesTraveled + 25,
             screen: 'death'
@@ -614,6 +634,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             return {
               ...state,
               party,
+              totalDeaths: state.totalDeaths + 1,
               lastDeath: { name: victim.name, message: "quit in frustration after leadership denied CMMC funding... again" },
               morale: Math.max(0, state.morale - 30),
               screen: 'death'
@@ -644,6 +665,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         ...state,
         party,
         sprsScore: Math.min(110, Math.max(-203, state.sprsScore + action.sprsBonus)),
+        secretNameUsed: true,
         screen: 'trail'
       };
     }
@@ -662,6 +684,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       let newState = {
         ...state,
         sprsScore: state.sprsScore - item.cost,
+        itemsBought: state.itemsBought + 1,
       };
 
       // Apply item effects
@@ -693,6 +716,19 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         screen: 'question'
       };
     }
+
+    // === ACHIEVEMENTS ===
+    case 'SHOW_ACHIEVEMENTS':
+      return { ...state, screen: 'achievements' };
+
+    case 'CLOSE_ACHIEVEMENTS':
+      return { ...state, screen: 'title' };
+
+    case 'FIRE_TANK':
+      return { ...state, tankFireCount: state.tankFireCount + 1 };
+
+    case 'MARK_SECRET_NAME_USED':
+      return { ...state, secretNameUsed: true };
 
     default:
       return state;

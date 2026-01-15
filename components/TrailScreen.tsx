@@ -11,6 +11,7 @@ interface TrailScreenProps {
   onHunt: () => void;
   onSupplies: () => void;
   onGiveUp: () => void;
+  onFireTank?: () => void;
 }
 
 // M1 Abrams Tank ASCII art frames
@@ -53,7 +54,7 @@ const SERVER_RACK = ` ___
 |===|
 |___|`;
 
-export default function TrailScreen({ state, onContinue, onRest, onHunt, onSupplies, onGiveUp }: TrailScreenProps) {
+export default function TrailScreen({ state, onContinue, onRest, onHunt, onSupplies, onGiveUp, onFireTank }: TrailScreenProps) {
   const [frame, setFrame] = useState(0);
   const [trackOffset, setTrackOffset] = useState(0);
   const [showFiring, setShowFiring] = useState(false);
@@ -78,6 +79,7 @@ export default function TrailScreen({ state, onContinue, onRest, onHunt, onSuppl
   const handleFire = () => {
     setShowFiring(true);
     playBrrrt();
+    onFireTank?.(); // Track for achievement
 
     setTimeout(() => {
       setShowFiring(false);

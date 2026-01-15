@@ -1,6 +1,6 @@
 'use client';
 
-import { useReducer, useCallback, useState } from 'react';
+import { useReducer, useCallback, useState, useEffect } from 'react';
 import { gameReducer, getInitialState, Difficulty } from '@/lib/gameState';
 import * as sounds from '@/lib/sounds';
 import TitleScreen from '@/components/TitleScreen';
@@ -21,7 +21,9 @@ import NameEntryModal from '@/components/NameEntryModal';
 import RiverCrossingScreen from '@/components/RiverCrossingScreen';
 import ValleyOfDespairScreen from '@/components/ValleyOfDespairScreen';
 import SupplyStoreScreen from '@/components/SupplyStoreScreen';
+import AchievementsScreen from '@/components/AchievementsScreen';
 import { StoreItem } from '@/lib/gameState';
+import { unlockAchievement } from '@/lib/achievements';
 
 export default function Home() {
   const [state, dispatch] = useReducer(gameReducer, getInitialState());
@@ -40,6 +42,16 @@ export default function Home() {
   const handleCloseLeaderboard = useCallback(() => {
     sounds.playClick();
     dispatch({ type: 'CLOSE_LEADERBOARD' });
+  }, []);
+
+  const handleAchievements = useCallback(() => {
+    sounds.playClick();
+    dispatch({ type: 'SHOW_ACHIEVEMENTS' });
+  }, []);
+
+  const handleCloseAchievements = useCallback(() => {
+    sounds.playClick();
+    dispatch({ type: 'CLOSE_ACHIEVEMENTS' });
   }, []);
 
   const handleGodMode = useCallback(() => {
@@ -189,11 +201,102 @@ export default function Home() {
     dispatch({ type: 'LEAVE_STORE' });
   }, []);
 
+  const handleFireTank = useCallback(() => {
+    dispatch({ type: 'FIRE_TANK' });
+  }, []);
+
   // Calculate accuracy for leaderboard
   const accuracy = state.questionsAnswered > 0
     ? Math.round((state.correctAnswers / state.questionsAnswered) * 100)
     : 0;
   const survivors = state.party.filter(m => m.alive).length;
+
+  // Achievement tracking
+  useEffect(() => {
+    // Konami code achievement
+    if (state.godMode) {
+      unlockAchievement('konami');
+    }
+
+    // Perfect 10 achievement (10 correct in a row)
+    if (state.consecutiveCorrect >= 10) {
+      unlockAchievement('perfect_10');
+    }
+
+    // First blood achievement
+    if (state.totalDeaths >= 1) {
+      unlockAchievement('first_blood');
+    }
+
+    // Tank commander achievement
+    if (state.tankFireCount >= 10) {
+      unlockAchievement('tank_commander');
+    }
+
+    // Shopaholic achievement
+    if (state.itemsBought >= 5) {
+      unlockAchievement('shopaholic');
+    }
+
+    // Secret name achievement
+    if (state.secretNameUsed) {
+      unlockAchievement('secret_name');
+    }
+
+    // Completionist achievement (seen all 50 questions)
+    if (state.usedQuestions.length >= 50) {
+      unlockAchievement('completionist');
+    }
+  }, [state.godMode, state.consecutiveCorrect, state.totalDeaths, state.tankFireCount, state.itemsBought, state.secretNameUsed, state.usedQuestions.length]);
+
+  // Victory/game over achievement tracking
+  useEffect(() => {
+    if (state.screen === 'victory') {
+      unlockAchievement('first_win');
+
+      // Difficulty-based achievements
+      if (state.difficulty === 'easy') unlockAchievement('easy_win');
+      if (state.difficulty === 'normal') unlockAchievement('normal_win');
+      if (state.difficulty === 'hard') unlockAchievement('hard_win');
+      if (state.difficulty === 'nightmare') unlockAchievement('nightmare_win');
+
+      // Perfect run
+      const allSurvived = state.party.every(m => m.alive);
+      if (allSurvived && accuracy === 100) {
+        unlockAchievement('perfect_run');
+      }
+
+      // Intern's Revenge
+      const livingMembers = state.party.filter(m => m.alive);
+      if (livingMembers.length === 1 &&
+          (livingMembers[0].name.toLowerCase().includes('intern') || livingMembers[0].name === 'The Intern (unnamed)')) {
+        unlockAchievement('intern_revenge');
+      }
+
+      // Solo survivor
+      if (livingMembers.length === 1) {
+        unlockAchievement('solo_survivor');
+      }
+
+      // Against all odds
+      if (state.sprsScore < 0) {
+        unlockAchievement('against_all_odds');
+      }
+
+      // Speed runner
+      if (state.questionsAnswered < 35) {
+        unlockAchievement('speed_runner');
+      }
+    }
+
+    if (state.screen === 'gameover') {
+      // Total party kill
+      const allDead = state.party.every(m => !m.alive);
+      if (allDead) {
+        unlockAchievement('total_party_kill');
+      }
+    }
+  }, [state.screen, state.difficulty, state.party, accuracy, state.sprsScore, state.questionsAnswered]);
 
   // Render current screen
   switch (state.screen) {
@@ -202,6 +305,7 @@ export default function Home() {
         <TitleScreen
           onContinue={handleTitleContinue}
           onLeaderboard={handleLeaderboard}
+          onAchievements={handleAchievements}
           onGodMode={handleGodMode}
           onSetDifficulty={handleSetDifficulty}
           godMode={state.godMode}
@@ -211,6 +315,9 @@ export default function Home() {
 
     case 'leaderboard':
       return <LeaderboardScreen onClose={handleCloseLeaderboard} />;
+
+    case 'achievements':
+      return <AchievementsScreen onClose={handleCloseAchievements} />;
 
     case 'intro':
       return <IntroScreen onContinue={handleIntroContinue} />;
@@ -227,6 +334,7 @@ export default function Home() {
           onHunt={handleHunt}
           onSupplies={handleSupplies}
           onGiveUp={handleGiveUp}
+          onFireTank={handleFireTank}
         />
       );
 
@@ -239,6 +347,7 @@ export default function Home() {
           onHunt={handleHunt}
           onSupplies={handleSupplies}
           onGiveUp={handleGiveUp}
+          onFireTank={handleFireTank}
         />;
       }
       return (
@@ -257,6 +366,7 @@ export default function Home() {
           onHunt={handleHunt}
           onSupplies={handleSupplies}
           onGiveUp={handleGiveUp}
+          onFireTank={handleFireTank}
         />;
       }
       return (
@@ -278,6 +388,7 @@ export default function Home() {
           onHunt={handleHunt}
           onSupplies={handleSupplies}
           onGiveUp={handleGiveUp}
+          onFireTank={handleFireTank}
         />;
       }
       return (
@@ -296,6 +407,7 @@ export default function Home() {
           onHunt={handleHunt}
           onSupplies={handleSupplies}
           onGiveUp={handleGiveUp}
+          onFireTank={handleFireTank}
         />;
       }
       return (
@@ -387,6 +499,7 @@ export default function Home() {
         <TitleScreen
           onContinue={handleTitleContinue}
           onLeaderboard={handleLeaderboard}
+          onAchievements={handleAchievements}
           onGodMode={handleGodMode}
           onSetDifficulty={handleSetDifficulty}
           godMode={state.godMode}
