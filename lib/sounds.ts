@@ -202,3 +202,89 @@ export function playStart() {
     { freq: 523, dur: 0.2 },
   ]);
 }
+
+// A-10 Warthog BRRRT sound - GAU-8 Avenger cannon
+export function playBrrrt() {
+  try {
+    const ctx = getAudioContext();
+    const duration = 0.8;
+
+    // Create noise buffer for the gun sound
+    const bufferSize = ctx.sampleRate * duration;
+    const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+
+    // Generate "ripping" noise pattern
+    for (let i = 0; i < bufferSize; i++) {
+      // Modulate noise with high frequency to create "brrt" effect
+      const modulation = Math.sin(i / (ctx.sampleRate / 70)) > 0 ? 1 : 0.3;
+      output[i] = (Math.random() * 2 - 1) * modulation;
+    }
+
+    const noiseSource = ctx.createBufferSource();
+    noiseSource.buffer = noiseBuffer;
+
+    // Low-pass filter for that chunky gun sound
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 800;
+
+    // Gain envelope
+    const gainNode = ctx.createGain();
+    gainNode.gain.setValueAtTime(0.4, ctx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+
+    // Add a low frequency oscillator for the "thump"
+    const lfo = ctx.createOscillator();
+    lfo.type = 'sawtooth';
+    lfo.frequency.value = 35;
+
+    const lfoGain = ctx.createGain();
+    lfoGain.gain.setValueAtTime(0.3, ctx.currentTime);
+    lfoGain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+
+    // Connect everything
+    noiseSource.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    lfo.connect(lfoGain);
+    lfoGain.connect(ctx.destination);
+
+    // Start
+    noiseSource.start(ctx.currentTime);
+    lfo.start(ctx.currentTime);
+    lfo.stop(ctx.currentTime + duration);
+  } catch (e) {
+    // Audio not supported
+  }
+}
+
+// A-10 jet engine sound (continuous hum)
+export function playJetEngine() {
+  try {
+    const ctx = getAudioContext();
+
+    // Low rumble
+    const osc1 = ctx.createOscillator();
+    osc1.type = 'sawtooth';
+    osc1.frequency.value = 80;
+
+    const osc2 = ctx.createOscillator();
+    osc2.type = 'triangle';
+    osc2.frequency.value = 120;
+
+    const gainNode = ctx.createGain();
+    gainNode.gain.setValueAtTime(0.15, ctx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+
+    osc1.connect(gainNode);
+    osc2.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    osc1.start(ctx.currentTime);
+    osc2.start(ctx.currentTime);
+    osc1.stop(ctx.currentTime + 0.5);
+    osc2.stop(ctx.currentTime + 0.5);
+  } catch (e) {}
+}
