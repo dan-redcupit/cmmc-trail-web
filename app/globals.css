@@ -1,0 +1,148 @@
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --terminal-green: #00ff00;
+  --terminal-darkgreen: #008800;
+  --terminal-red: #ff4444;
+  --terminal-yellow: #ffff00;
+  --terminal-cyan: #00ffff;
+  --terminal-bg: #0a0a0a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  background-color: var(--terminal-bg);
+  color: var(--terminal-green);
+  font-family: 'VT323', 'Courier New', monospace;
+  font-size: 18px;
+  line-height: 1.4;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+/* CRT screen effect */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.15),
+    rgba(0, 0, 0, 0.15) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  z-index: 9999;
+}
+
+/* Glow effect for text */
+.glow {
+  text-shadow: 0 0 5px var(--terminal-green), 0 0 10px var(--terminal-green);
+}
+
+.glow-red {
+  text-shadow: 0 0 5px var(--terminal-red), 0 0 10px var(--terminal-red);
+}
+
+.glow-yellow {
+  text-shadow: 0 0 5px var(--terminal-yellow), 0 0 10px var(--terminal-yellow);
+}
+
+/* Terminal colors */
+.text-green { color: var(--terminal-green); }
+.text-darkgreen { color: var(--terminal-darkgreen); }
+.text-red { color: var(--terminal-red); }
+.text-yellow { color: var(--terminal-yellow); }
+.text-cyan { color: var(--terminal-cyan); }
+.text-white { color: #ffffff; }
+
+/* Button styling */
+.terminal-btn {
+  background: transparent;
+  border: 1px solid var(--terminal-green);
+  color: var(--terminal-green);
+  padding: 8px 16px;
+  font-family: 'VT323', monospace;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.terminal-btn:hover {
+  background: var(--terminal-green);
+  color: var(--terminal-bg);
+  text-shadow: none;
+}
+
+.terminal-btn:active {
+  transform: scale(0.98);
+}
+
+/* Input styling */
+.terminal-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--terminal-green);
+  color: var(--terminal-green);
+  font-family: 'VT323', monospace;
+  font-size: 18px;
+  padding: 4px 8px;
+  outline: none;
+}
+
+.terminal-input:focus {
+  border-bottom: 2px solid var(--terminal-green);
+}
+
+/* ASCII box styling */
+pre {
+  font-family: 'VT323', 'Courier New', monospace;
+  margin: 0;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+/* Progress bar */
+.progress-bar {
+  display: inline-block;
+}
+
+/* Animation for blinking cursor */
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.blink {
+  animation: blink 1s infinite;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--terminal-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--terminal-darkgreen);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--terminal-green);
+}
