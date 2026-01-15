@@ -47,17 +47,17 @@ body::before {
   z-index: 9999;
 }
 
-/* Glow effect for text */
+/* Subtle glow effect - reduced for readability */
 .glow {
-  text-shadow: 0 0 5px var(--terminal-green), 0 0 10px var(--terminal-green);
+  text-shadow: 0 0 2px var(--terminal-green);
 }
 
 .glow-red {
-  text-shadow: 0 0 5px var(--terminal-red), 0 0 10px var(--terminal-red);
+  text-shadow: 0 0 2px var(--terminal-red);
 }
 
 .glow-yellow {
-  text-shadow: 0 0 5px var(--terminal-yellow), 0 0 10px var(--terminal-yellow);
+  text-shadow: 0 0 2px var(--terminal-yellow);
 }
 
 /* Terminal colors */

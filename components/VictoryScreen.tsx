@@ -1,6 +1,8 @@
 'use client';
 
+import { useEffect } from 'react';
 import { GameState } from '@/lib/gameState';
+import { playVictory } from '@/lib/sounds';
 
 interface VictoryScreenProps {
   state: GameState;
@@ -8,6 +10,10 @@ interface VictoryScreenProps {
 }
 
 export default function VictoryScreen({ state, onRestart }: VictoryScreenProps) {
+  useEffect(() => {
+    playVictory();
+  }, []);
+
   const survivors = state.party.filter(m => m.alive);
   const fallen = state.party.filter(m => !m.alive);
   const accuracy = state.questionsAnswered > 0

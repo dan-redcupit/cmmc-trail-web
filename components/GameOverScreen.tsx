@@ -1,6 +1,8 @@
 'use client';
 
+import { useEffect } from 'react';
 import { GameState } from '@/lib/gameState';
+import { playGameOver } from '@/lib/sounds';
 
 interface GameOverScreenProps {
   state: GameState;
@@ -8,6 +10,10 @@ interface GameOverScreenProps {
 }
 
 export default function GameOverScreen({ state, onRestart }: GameOverScreenProps) {
+  useEffect(() => {
+    playGameOver();
+  }, []);
+
   return (
     <div className="text-center max-w-2xl mx-auto">
       <div className="border-2 border-terminal-red p-4 sm:p-6">
